@@ -1,45 +1,54 @@
 const express = require('express')
-// 引用 passport，放在文件上方
-const passport = require('passport')
 const session = require('express-session')
 const exphbs = require('express-handlebars')
 const methodOverride = require('method-override')
-const bcrypt = require('bcryptjs')
+const flash = require('connect-flash')
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
+const routes = require('./routes')
+
 // 載入設定檔，要寫在 express-session 以後
 const usePassport = require('./config/passport')
+
 const app = express()
 const port = 3000
 
+//  middleware: use express-handlebars
 app.engine('hbs', exphbs({ defaultLayout: 'main', extname: '.hbs' }))
 app.set('view engine', 'hbs')
 
+//  middleware: use session
 app.use(session({
   secret: 'ThisIsMySecret',
   resave: false,
   saveUninitialized: true
 }))
 
+//  middleware: use body-parser
 app.use(express.urlencoded({ extended: true }))
+
+//  middleware: to correspond restful api update delete...
 app.use(methodOverride('_method'))
 
-// 呼叫 Passport 函式並傳入 app，這條要寫在路由之前
+// middleware: call passport definition
 usePassport(app)
 
-app.get('/', (req, res) => {
-  return Todo.findAll({
-    raw: true,
-    nest: true
-  })
-    .then((todos) => { return res.render('index', { todos: todos }) })
-    .catch((error) => { return res.status(422).json(error) })
+//  middleware: use flash
+app.use(flash())
+
+//  middleware: res.locals
+app.use((res, req, next) => {
+  res.locals.isAuthenticated = req.isAuthenticated()
+  res.locals.user = req.user
+  res.locals.success_msg = req.flash('success_msg')
+  res.locals.warning_msg = req.flash('warning_msg')
+  res.locals.error = req.flash('error')
+  next()
 })
 
-app.get('/todos/:id', (req, res) => {
-  const id = req.params.id
-  return Todo.findByPk(id)
-    .then(todo => res.render('detail', { todo: todo.toJSON() }))
-    .catch(error => console.log(error))
-})
+// middleware: lead traffic to routes
+app.use(routes)
 
 app.listen(port, () => {
   console.log(`App is running on http://localhost:${port}`)
