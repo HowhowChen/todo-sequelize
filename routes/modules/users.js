@@ -1,30 +1,49 @@
 const router = require('express').Router()
 const passport = require('passport')
 const bcrypt = require('bcryptjs')
-const db = require('./models')
-const Todo = db.Todo
+const db = require('../../models')
 const User = db.User
 
-router.get('/users/login', (req, res) => {
+router.get('/login', (req, res) => {
   res.render('login')
 })
 
-// 加入 middleware，驗證 reqest 登入狀態
-router.post('/users/login', passport.authenticate('local', {
+router.post('/login', passport.authenticate('local', {
   successRedirect: '/',
-  failureRedirect: '/users/login'
+  failureRedirect: '/users/login',
+  failureFlash: true
 }))
 
-router.post('/users/login', (req, res) => {
+router.post('/login', (req, res) => {
   res.send('login')
 })
 
-router.get('/users/register', (req, res) => {
+router.get('/register', (req, res) => {
   res.render('register')
 })
 
-router.post('/users/register', (req, res) => {
+router.post('/register', (req, res) => {
   const { name, email, password, confirmPassword } = req.body
+  const errors = []
+
+  if (!name || !email || !password || !confirmPassword) {
+    errors.push({ message: '所有欄位都必填' })
+  }
+
+  if (password !== confirmPassword) {
+    errors.push({ message: '密碼與確認密碼不相符' })
+  }
+
+  if (errors.length) {
+    return res.render('register', {
+      errors,
+      name,
+      email,
+      password,
+      confirmPassword
+    })
+  }
+
   User.findOne({ where: { email } }).then(user => {
     if (user) {
       console.log('User already exists')
@@ -48,9 +67,10 @@ router.post('/users/register', (req, res) => {
   })
 })
 
-router.get('/users/logout', (req, res) => {
-  res.send('logout')
+router.get('/logout', (req, res) => {
+  req.logout()
+  req.flash('success_msg', 'logout finish')
+  res.redirect('/uses/login')
 })
-
 
 module.exports = router

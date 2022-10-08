@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const db = require('./models')
+const db = require('../../models')
 const Todo = db.Todo
 
 router.get('/', (req, res) => {
@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
     .catch((error) => { return res.status(422).json(error) })
 })
 
-router.get('/todos/:id', (req, res) => {
+router.get('/:id', (req, res) => {
   const id = req.params.id
   return Todo.findByPk(id)
     .then(todo => res.render('detail', { todo: todo.toJSON() }))

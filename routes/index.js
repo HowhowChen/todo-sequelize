@@ -6,6 +6,7 @@ const users = require('./modules/users')
 const auth = require('./modules/auth')
 
 const { authenticator } = require('../middleware/auth') // 掛載 middleware
+
 //  將網址結構符合 / 字串的 request 導向 home 模組
 
 router.use('/todos', authenticator, todos) // 加入驗證程序
