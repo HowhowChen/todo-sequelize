@@ -22,49 +22,51 @@ router.get('/register', (req, res) => {
   res.render('register')
 })
 
-router.post('/register', (req, res) => {
-  const { name, email, password, confirmPassword } = req.body
-  const errors = []
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, password, confirmPassword } = req.body
+    const errors = []
 
-  if (!name || !email || !password || !confirmPassword) {
-    errors.push({ message: '所有欄位都必填' })
-  }
+    if (!name || !email || !password || !confirmPassword) {
+      errors.push({ message: '所有欄位都必填' })
+    }
 
-  if (password !== confirmPassword) {
-    errors.push({ message: '密碼與確認密碼不相符' })
-  }
+    if (password !== confirmPassword) {
+      errors.push({ message: '密碼與確認密碼不相符' })
+    }
 
-  if (errors.length) {
-    return res.render('register', {
-      errors,
-      name,
-      email,
-      password,
-      confirmPassword
-    })
-  }
-
-  User.findOne({ where: { email } }).then(user => {
-    if (user) {
-      console.log('User already exists')
+    if (errors.length) {
       return res.render('register', {
+        errors,
         name,
         email,
         password,
         confirmPassword
       })
     }
-    return bcrypt
-      .genSalt(10)
-      .then(salt => bcrypt.hash(password, salt))
-      .then(hash => User.create({
+
+    const user = await User.findOne({ where: { email } })
+    if (user) {
+      errors.push({ message: '使用者已存在' })
+      return res.render('register', {
+        errors,
         name,
         email,
-        password: hash
-      }))
-      .then(() => res.redirect('/'))
-      .catch(err => console.log(err))
-  })
+        password,
+        confirmPassword
+      })
+    }
+    const salt = await bcrypt.genSalt(10)
+    const hash = await bcrypt.hash(password, salt)
+    await User.create({
+      name,
+      email,
+      password: hash
+    })
+    res.redirect('/')
+  } catch (e) {
+    console.log(e)
+  }
 })
 
 router.get('/logout', (req, res) => {
