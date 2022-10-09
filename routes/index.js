@@ -14,4 +14,10 @@ router.use('/users', users)
 router.use('/auth', auth)
 router.use('/', authenticator, home) // 加入驗證程序
 
+//  get a 404 page
+router.get('*', (req, res) => {
+  res.locals.layout = 'space.hbs'
+  res.status(404).render('error404', { error: `We can't find this page.` })
+})
+
 module.exports = router
