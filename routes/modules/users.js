@@ -22,7 +22,7 @@ router.get('/register', (req, res) => {
   res.render('register')
 })
 
-router.post('/register', async (req, res) => {
+router.post('/register', async (req, res, next) => {
   try {
     const { name, email, password, confirmPassword } = req.body
     const errors = []
@@ -64,8 +64,8 @@ router.post('/register', async (req, res) => {
       password: hash
     })
     res.redirect('/')
-  } catch (e) {
-    console.log(e)
+  } catch (err) {
+    next(err)
   }
 })
 
